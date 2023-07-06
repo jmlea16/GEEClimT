@@ -160,31 +160,7 @@ This means that all the steps have been completed, and resulting data can then b
 Well done! You have now completed all the steps for receiving data from GEEClimT.
 
 ## Acknowledgements
-This readme file was written by Georgia Carr and Natasha Jones (University of Liverpool). James Lea takes is responsible for the accuracy of the workflow description above, and any queries should be directed to him.
+This readme file was written by Georgia Carr and Natasha Jones (University of Liverpool). James Lea is responsible for the accuracy of the workflow description above, and any queries should be directed to him.
 
 ## Disclaimer
 Data in GEEClimT are provided as given, and the authors take no responsibility for how data extracted from GEEClimT are used. GEEClimT is strictly intended for non-commercial use. For commercial applications, users should contact James Lea.
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
