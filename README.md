@@ -92,7 +92,7 @@ Run tasks...
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/5c5fc252-c78a-49ce-a36f-743cf854df01)
 
-The task will be moved to submitted tasks and will turn from a grey to blue background once complete. The user can keep an eye on the runtime to the right of the task. 
+The task will be moved to submitted tasks and will turn from a grey to blue background once complete. The user can keep an eye on the runtime to the right of the task.
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/e3c415cf-02ee-4dbb-904a-b5ede07c71ad)
 
@@ -101,6 +101,8 @@ Once completed, the bar showing the submitted task will turn blue:
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/47ea2734-810d-4ba2-b6d5-1d846e5837aa)
 
 At this point, the output data can be downloaded from a user's Google Drive for use in further analysis and/or visualisation.
+
+*Tip: if your query generates a lot of export tasks, the [Open Earth Engine Google Chrome browser extension](https://chrome.google.com/webstore/detail/open-earth-engine-extensi/dhkobehdekjgdahfldleahkekjffibhg) developed by Mathieu Gravey provides users with a "Run all tasks" option.*
 
 
 ### Step 5 (vector/CSV)
@@ -154,6 +156,8 @@ The code editor and export panel can be revealed when dragging the top of the sc
 In the export panel, click *Run* to submit the export task for processing. While the data is exported, you must wait. This is indicated by the bar having a grey background. When this is finished, the background will turn blue.
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/747d11c0-e401-48cf-bd89-334a56642cf2)
+
+*Tip: if your query generates a lot of export tasks, the [Open Earth Engine Google Chrome browser extension](https://chrome.google.com/webstore/detail/open-earth-engine-extensi/dhkobehdekjgdahfldleahkekjffibhg) developed by Mathieu Gravey provides users with a "Run all tasks" option.*
 
 This means that all the steps have been completed, and resulting data can then be downloaded from a user’s Google Drive.
 
