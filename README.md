@@ -21,7 +21,7 @@ Once the formatting for the data export has been chosen, the user is required to
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/af2373eb-b33d-4802-ab98-724228931183)
 
-Once the ERA5 Daily Aggregates data is selected in the drop-down menu, the data will be displayed on top of the map like shown below. For more information on the selected data, click the blue text below step 1 in the interface. This will open a new tab in Earth Engine Data Catalog and provide a description of the dataset, its properties and citations. 
+Once the ERA5 Daily Aggregates data is selected in the drop-down menu, the data will be displayed on top of the map as shown below. For more information on the selected data, click the blue text below step 1 in the interface. This will open a new tab in Earth Engine Data Catalog and provide a description of the dataset, its properties and citations. 
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/10e70a78-4516-4be4-8493-7520b6a458b6)
 
@@ -80,7 +80,7 @@ To export the data, drag the top of the interface down using the grey line with 
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/c5bf4f75-bd2c-4253-82a0-4fc54c0d6082)
 
-After tasks have been selected, it will display the name of the data variables selected (GeoTIFF data), along with CSV files that contain timestamp information for each output band of selected variables. As we selected all 9 variables from the data, a total of 9 tasks will need running. However, as the ROI is quite large, each variable from this example is split into 3 different tasks, therefore a total of 27 GeoTIFF tasks are displayed, alongside 3 CSV files. 
+After tasks have been selected, it will display the name of the data variables selected (GeoTIFF data), along with CSV files that contain timestamp information for each output band of the selected variables. As we selected all 9 variables from the data, a total of 9 tasks will need running. However, as the ROI is quite large, each variable from this example is split into 3 different tasks, therefore a total of 27 GeoTIFF tasks are displayed, alongside 3 CSV files. 
 
 *Note that the number of tasks at the end will vary depending on the number of variables selected and the ROI.*
 
@@ -104,7 +104,7 @@ At this point, the output data can be downloaded from a user's Google Drive for 
 
 
 ### Step 5 (vector/CSV)
-If a CSV format was selected as the data output in step 1, the steps in the interface will be displayed slightly differently. Follow steps 1-3 as outlined above. When the user gets to step 4, they are required to choose how GEEClimT will process the data for export. There are two processing options in GEEClimT:
+If a CSV format was selected as the data output in step 1, the steps in the interface will be displayed slightly differently. Follow steps 1-3 as outlined above and input the desired daterange.  When the user gets to step 4, they are required to choose how GEEClimT will process the data for export. There are two processing options in GEEClimT:
 
 1. Mean of all point locations/polygon - this will return the mean of all the points/the entire region defined by the ROI (e.g. if three points are defined in the ROI the values returned will be the average of the three points). This option is likely to be most useful where the ROI is a polygon.
 2. Values of individual point locations (data for multiple points/polygon) - this will return data for each individual data point that overlaps with the the ROI (e.g. if three points are defined in the ROI the values for each of the three individual data points will be returned). This option is likely to be most useful where the ROI a point/multiple points.
@@ -131,17 +131,17 @@ In this step, once the previous steps are completed, the ROI can be defined. Wit
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/98de988b-166f-474a-906f-8bf9b33aa967)
 
-Once the above is defined, the import option must be specified, between points or polygon data. This is only required when defining custom point location/polygon coordinates. This then completes the actions required for step 6. This example will use the first option to manually draw the ROI (e.g. see the raster/image export example [GeoTIFF data](https://github.com/jmlea16/GEEClimT/edit/main/README.md#step-5-imagegeotiff)).
+Once the above is defined, the import option must be specified, between points or polygon data. This is only required when defining custom point location/polygon coordinates. This then completes the actions required for step 6 in the interface. This example will use the first option to manually draw the ROI (e.g. see the raster/image export example [GeoTIFF data](https://github.com/jmlea16/GEEClimT/edit/main/README.md#step-5-imagegeotiff)).
 
 ### Step 8 (vector/CSV) - Generating gridded area of interest
 To generate the gridded area of interest, click the *Generate gridded area of interest* and *Get data* buttons to prepare the data for export,:
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/5b437d33-6805-41cd-9e95-937eba023e0c)
 
-Once the specified button is clicked, a ‘Processing’ bar will appear on screen for a few seconds to confirm that data is being processed in preparation for export. The time taken for this process to complete depends on the dataset size requested.
+Once the *Get data* button is clicked, a ‘Processing’ bar will appear on the screen for a few seconds to confirm that data is being processed in preparation for export. The time taken for this process to complete depends on the dataset size requested.
 
 ### Step 9 (vector/CSV) - Previewing and exporting the data
-Once the data have been processed a preview of the data will appear on the left panel of the screen that also provides the opportunity for users to view data for different sites and different variables selected. *Note that this preview is limited to the first 1000 observations. If the dataset size exceeds 1000 observations per site these data have been processed, but are not visualised*.
+Once the data has been processed, a preview of the data will appear on the left panel of the screen that also provides the opportunity for users to view data for different sites and different variables selected. *Note that this preview is limited to the first 1000 observations. If the dataset size exceeds 1000 observations per site these data have been processed, but are not visualised*.
 
 The export task for the processed data can then be generated.
 
