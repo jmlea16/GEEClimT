@@ -36,7 +36,7 @@ Once the desired variables are chosen, click ok and this will take the user back
 ### Step 4 - Select date and month range
 After the variables are selected, the date range needs defining. The full date range of the dataset will automatically be displayed and does not need altering by the user if the full date range is needed.
 
-If required, users can manually change this in the text box to a desired start and end date in a year-month-day format (YYYY-MM-DD). As an example, we will change this data to start on March 5th, 1989 (1989-03-05) and end on July 18th, 2019 (2019-07-18). Note that month and day values <10 need a leading 0 for the date to be accepted (e.g. 1989-3-5 will result in the interface returning an error). 
+If required, users can manually change this in the text box to a desired start and end date in a year-month-day format (YYYY-MM-DD). As an example, we will change this data to start on March 5th, 1989 (1989-03-05) and end on July 18th, 2019 (2019-07-18). Note that month and day values <10 need a leading 0 for the date to be accepted (e.g. 1989-3-5 will result in the interface returning an error, whereas 1989-03-05 will not). 
 
 If only certain months are desired from the dataset, users can define these by clicking on the month options below. This option can be particularly useful when investigating seasonal change. If a range of months that span the end of the year are required (e.g. northern hemisphere winter), the start month selected would be December, and end month would be February. In this example we will use the default months from January to December.
 
