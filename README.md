@@ -1,5 +1,6 @@
 # GEEClimT - Google Earth Engine Climate Tool
 **If you use this tool please cite Lea et al. (submitted) and any citations from the data extracted using the tool.**
+
 **© Copyright, Dr James Lea, University of Liverpool 2023. All Rights Reserved.**
 
 The Google Earth Engine Climate Tool (GEEClimT) is an easy to use point and click interface to extract climate reanalysis data for academic research, education and outreach purposes. More details about the tool and case studies of its use can be found in the associated paper (Lea et al., submitted). Users who are interested in model projections of future climates may also wish to use GEEClimT's partner tool, the Google Earth Engine Climate Explorer (GEECE). More information on GEECE can be found here.
