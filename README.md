@@ -9,7 +9,7 @@ The Google Earth Engine Climate Tool (GEEClimT) is an easy to use point and clic
 The following provides a step by step walkthrough of how to use GEEClimT, and demonstrates its functionality. Before trying to access GEEClimT users will need to have access to a non-commercial [Google Earth Engine account](https://code.earthengine.google.com/register). Note that use of GEEClimT through this route is **not** permitted for commercial purposes. Users who wish to use GEEClimT for commercial purposes should [contact the authors](mailto:j.lea@liverpool.ac.uk). 
 
 ### Getting started
-GEECLIMT and its code is run through Google Earth Engine using JavaScript API. To access the tools click [here](https://liverpool.onlinesurveys.ac.uk/geeclimt-geece-user-survey), where you will be asked for brief user information before being provided with a link to the tool.  Once the interface has been opened a welcome page will appear as shown below:
+GEEClimT and its code is run through Google Earth Engine using JavaScript API. To access the tools click [here](https://liverpool.onlinesurveys.ac.uk/geeclimt-geece-user-survey), where you will be asked for brief user information before being provided with a link to the tool.  Once the interface has been opened a welcome page will appear as shown below:
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/8ececc10-2475-4934-b805-436612b17f1c)
 
@@ -169,4 +169,4 @@ Well done! You have now completed all the steps for receiving data from GEEClimT
 This readme file was written by Georgia Carr and Natasha Jones (University of Liverpool). James Lea is responsible for the accuracy of the workflow description above, and any queries should be directed to him.
 
 ## Disclaimer
-Data in GEEClimT are provided as given, and the authors take no responsibility for how data extracted from GEEClimT are used. GEEClimT is strictly intended for non-commercial use. For commercial applications, users should contact James Lea.
+Data in GEEClimT are provided as given, and the authors take no responsibility for how data extracted from GEEClimT are used. GEEClimT is strictly intended for non-commercial use. To discuss potential commercial applications, users should contact James Lea (j.lea@liverpool.ac.uk).
