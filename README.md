@@ -13,7 +13,7 @@ GEEClimT and its code is run through Google Earth Engine using JavaScript API. T
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/8ececc10-2475-4934-b805-436612b17f1c)
 
-### Step 1 - Select export format (CSV or GEoTIFF)
+### Step 1 - Select export format (CSV or GeoTIFF)
 The first step in the interface is to select the desired export format by clicking on the drop-down arrows under step 1(a). The user can choose to export the final dataset as either a CSV spreadsheet (point data) or a GeoTIFF (spatially referenced information in the form of georeferenced raster imagery). For this example, we will select the raster grid (GeoTIFF) format for the data output.
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/54d2de76-6ea5-49c6-a505-ca421867904a)
