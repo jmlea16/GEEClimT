@@ -1,0 +1,1741 @@
+//Google Earth Engine Climate (GEEClimT) v0.26
+//Written by James M Lea, University of Liverpool
+//Email: j.lea@liverpool.ac.uk
+
+Map.setCenter(0,0,1.5);
+
+var restartScript=function(){
+  Map.clear();
+  Map.add(clearMapPanel);
+  var geometry;
+  var drawingTools=Map.drawingTools();
+  drawingTools.layers().reset();
+  drawingTools.clear();
+  drawingTools.setShown(false);
+  
+  //Sets up main menu panel
+  var mainPanel=ui.Panel({
+      style: {
+      width:'33.33%', 
+      position:'top-left'
+      }
+    });
+  
+  if(ui.root.widgets().length()===2){
+     ui.root.remove(ui.root.widgets().get(0));//adds panel to root (*not* Map)
+  }
+  ui.root.insert(0,mainPanel);
+  
+  //Panel to select variables (inputs defined dynamically below)
+  var variablePanel=ui.Panel({
+        style: {
+        width:'33.33%',
+        position:'top-right',
+        shown:true
+        }
+      });
+  
+  
+  var inputVars=ee.Dictionary.fromLists([
+    'dateStart','dateEnd','monthStart','monthEnd',
+    'dataset',
+    'tableAsciivalue','initialGridROI','gridMatchROI',
+    'siteNames','transform','crs','initialGeom','geomType',
+    'imColl','closestGrid','reducer','analysisROI',
+    'description','variablesSelected'
+    ],
+    ['',''.slice(0,10),1,12,
+      0,
+      0,null,null,
+      [],0,'',null,null,
+      null,null,[],null,
+      '',[]]);
+  
+      
+  ////////////////////////////////////////////////////////////////
+  Map.setOptions("SATELLITE");
+  Map.style().set('cursor', 'crosshair');
+  
+  //Set up panel labels and options
+  var welcomeTitle=ui.Label({
+        value: 'GEEClimT version 0.26',
+        style: {
+          margin: '1px 10px 1px 10px',
+          fontSize: '20px',
+          fontWeight: 'bold',
+          textAlign:'center',
+          stretch:'horizontal'
+          }
+      });
+  var welcomeSubtitle=ui.Label({value:'Written by James M. Lea, University of Liverpool',
+        style: {
+          margin: '1px 10px 1px 10px',
+          fontSize: '12px',
+          textAlign:'center',
+          stretch:'horizontal'
+          }});
+  var welcomeSubtitle1a=ui.Label({value:'For educational and research purposes only.',
+        style: {
+          margin: '1px 10px 1px 10px',
+          fontSize: '12px',
+          fontWeight:'bold',
+          textAlign:'center',
+          stretch:'horizontal'
+          }});
+  var welcomeSubtitle1b=ui.Label({value:'For commercial applications or other uses, contact below.',
+        style: {
+          margin: '1px 10px 1px 10px',
+          fontSize: '12px',
+          fontWeight:'bold',
+          textAlign:'center',
+          stretch:'horizontal'
+          }});
+  var welcomeSubtitle1=ui.Label({value:'Twitter: @JamesMLea',
+        style: {
+          margin: '1px 10px 1px 10px',
+          textAlign:'center',
+          stretch:'horizontal',
+          fontWeight:'bold',
+          fontSize: '12px',
+          color:'blue'
+          }}).setUrl('https://twitter.com/JamesMLea');
+  var welcomeSubtitle1i=ui.Label({value:'To request new datasets in GEEClimT that are part of the Earth Engine Data Catalogue, contact the author. Before doing this, check whether the dataset is available using the search bar at the top of the page.',
+        style: {
+          margin: '10px 50px 1px 50px',
+          textAlign:'center',
+          stretch:'horizontal',
+          fontWeight:'bold',
+          fontSize: '12px',
+          // color:'blue'
+          }});
+  var welcomeSubtitle1ii=ui.Label({value:'Datasets must be in the Earth Engine Data Catalogue if they are to be made available in GEEClimT. To request new datasets for inclusion in the Data Catalogue, suggest it to Google',
+        style: {
+          margin: '10px 50px 1px 50px',
+          textAlign:'center',
+          stretch:'horizontal',
+          fontWeight:'bold',
+          fontSize: '12px',
+          // color:'blue'
+          }});
+  var welcomeSubtitle1iii=ui.Label({value:'here.',
+        style: {
+          margin: '1px 10px 1px 10px',
+          textAlign:'center',
+          stretch:'horizontal',
+          fontWeight:'bold',
+          fontSize: '12px',
+          // color:'blue'
+          }}).setUrl('https://issuetracker.google.com/issues?q=componentid:1161680%2B%20status:open');
+  var welcomeSubtitle2=ui.Label({value:'If you use this tool, cite:',
+        style: {
+          margin: '10px 10px 1px 10px',
+          textAlign:'center',
+          stretch:'horizontal',
+          fontSize: '12px',
+          fontWeight:'bold'
+          }});
+  var welcomeSubtitle2a=ui.Label({value:'XXXXXX',
+        style: {
+          margin: '1px 10px 1px 10px',
+          textAlign:'center',
+          stretch:'horizontal',
+          fontSize: '12px',
+          fontWeight:'bold'
+          }}).setUrl('');
+  var welcomeSubtitle2b=ui.Label({value:'AND any dataset used.',
+        style: {
+          margin: '1px 10px 1px 10px',
+          textAlign:'center',
+          stretch:'horizontal',
+          fontSize: '12px',
+          fontWeight:'bold'
+          }});
+  var welcomeSubtitle3=ui.Label({value:'Email: j.lea@liverpool.ac.uk',
+        style: {
+          margin: '1px 15px 1px 10px',
+          textAlign:'center',
+          stretch:'horizontal',
+          fontWeight:'bold',
+          fontSize: '12px',
+          color:'blue'
+          }}).setUrl('mailto:j.lea@liverpool.ac.uk');
+  // var welcomeSubtitle4=ui.Label({value:'Lea, 2018, Earth Surface Dynamics (link)',
+  //       style: {
+  //         margin: '1px 10px 1px 10px',
+  //         textAlign: 'center',
+  //         fontSize: '12px'
+  //       }}).setUrl('https://doi.org/10.5194/esurf-6-551-2018');
+  
+  mainPanel.add(welcomeTitle).add(welcomeSubtitle).add(welcomeSubtitle1a).add(welcomeSubtitle1b)
+    .add(welcomeSubtitle1).add(welcomeSubtitle3).add(welcomeSubtitle2).add(welcomeSubtitle2a)
+    .add(welcomeSubtitle2b);
+    //.add(welcomeSubtitle4)
+  
+  //1. Dataset options
+  var dataLabel=ui.Label('1. Select data output type and then select dataset:',
+          {margin: '15px 50px 1px 50px',
+          fontWeight: 'bold'});
+  
+  var dataList=[
+                {name:'ERA5 Daily Aggregates (0.25 deg)',
+                  label:'ERA5Daily',
+                  path:"ECMWF/ERA5/DAILY",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/ECMWF_ERA5_DAILY'
+                },
+                {name:'ERA5 Monthly Aggregates (0.25 deg)',
+                  label:'ERA5Monthly',
+                  path:"ECMWF/ERA5/MONTHLY",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/ECMWF_ERA5_MONTHLY'
+                },
+                {name:'ERA5-Land Hourly (0.1 deg)',
+                  label:'ERA5-LandHourly',
+                  path:"ECMWF/ERA5_LAND/HOURLY",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/ECMWF_ERA5_LAND_HOURLY'
+                },
+                {name:'ERA5-Land Daily Aggregated (0.1 deg)',
+                  label:'ERA5-LandDaily',
+                  path:"ECMWF/ERA5_LAND/DAILY_AGGR",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/ECMWF_ERA5_LAND_DAILY_RAW'
+                },
+                {name:'ERA5-Land Monthly Aggregated (0.1 deg)',
+                  label:'ERA5-LandMonthly',
+                  path:"ECMWF/ERA5_LAND/MONTHLY_AGGR",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/ECMWF_ERA5_LAND_MONTHLY_AGGR'
+                },
+                {name:'ERA5-Land Monthly Averaged by Hour of Day (0.1 deg)',
+                  label:'ERA5-LandMonthlyMeanbyHour',
+                  path:"ECMWF/ERA5_LAND/MONTHLY_BY_HOUR",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/ECMWF_ERA5_LAND_MONTHLY_BY_HOUR'
+                },
+                {name:'ERALClim - Key (bio-)climatic variables at annual resolution (0.1 deg)',
+                  label:'ERALClim-KeyClimateVariables',
+                  path:"users/Jmleaglacio/ERALClim",
+                  url:'https://code.earthengine.google.com/?asset=users/Jmleaglacio/BioclimERA5Land'
+                },
+                {name:'ERALClimB - Key (bio-)climatic variables for WMO climate baselines (0.1 deg)',
+                  label:'ERALClimB-KeyClimateVariablesBaselines',
+                  path:"users/Jmleaglacio/ERALClim_baselines",
+                  url:'https://code.earthengine.google.com/?asset=users/Jmleaglacio/BioclimERA5Land_baselines'
+                },
+                {name:'NCEP/NCAR Surface Level Pressure (2.5 deg)',
+                  label:'NCEP_NCAR_Surface_Level_Pressure',
+                  path:"NCEP_RE/sea_level_pressure",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NCEP_RE_sea_level_pressure'
+                },
+                {name:'NCEP/NCAR Surface Temperature (2.5 deg)',
+                  label:'NCEP_NCAR_Surface_Temperature',
+                  path:"NCEP_RE/surface_temp",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NCEP_RE_surface_temp'
+                },
+                {name:'NCEP/NCAR Water Vapor (2.5 deg)',
+                  label:'NCEP_NCAR_Water_Vapor',
+                  path:"NCEP_RE/surface_wv",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NCEP_RE_surface_wv'
+                },
+                {name:'NCEP-DOE Reanalysis 2 (Gaussian Grid), Total Cloud Coverage',
+                  label:'NCEP_DOE_TotCloudCover',
+                  path:"NOAA/NCEP_DOE_RE2/total_cloud_coverage",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NOAA_NCEP_DOE_RE2_total_cloud_coverage'
+                },
+                {name:'GLDAS-2.1: Global Land Data Assimilation System',
+                  label:'GLDAS_2_1_GlobalLandDataAssimilationSystem',
+                  path:"NASA/GLDAS/V021/NOAH/G025/T3H",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NASA_GLDAS_V021_NOAH_G025_T3H'
+                },
+                {name:'GLDAS-2.2: Global Land Data Assimilation System',
+                  label:'GLDAS_2_2_GlobalLandDataAssimilationSystem',
+                  path:"NASA/GLDAS/V022/CLSM/G025/DA1D",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NASA_GLDAS_V022_CLSM_G025_DA1D'
+                },
+                {name:'NCEP-DOE Reanalysis 2 (Gaussian Grid), Total Cloud Coverage (2.5 deg)',
+                  label:'NCEP-DOE_Total_Cloud_Coverage',
+                  path:"NOAA/NCEP_DOE_RE2/total_cloud_coverage",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NOAA_NCEP_DOE_RE2_total_cloud_coverage'
+                },
+                {name:'GSMaP Operational: Global Satellite Mapping of Precipitation (0.1 deg)',
+                  label:'GSMaP_Precipitation',
+                  path:"JAXA/GPM_L3/GSMaP/v6/operational",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/JAXA_GPM_L3_GSMaP_v6_operational'
+                },
+                {name:'MERRA-2 M2T1NXAER: Aerosol Diagnostics V5.12.4 (0.5x0.625 deg)',
+                  label:'MERRA-2_Aerosol_Diagnostics',
+                  path:"NASA/GSFC/MERRA/aer/2",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NASA_GSFC_MERRA_aer_2'
+                },
+                {name:'MERRA-2 M2T1NXFLX: Surface Flux Diagnostics V5.12.4 (0.5x0.625 deg)',
+                  label:'MERRA-2_Surface_Flux_Diagnostics',
+                  path:"NASA/GSFC/MERRA/flx/2",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NASA_GSFC_MERRA_flx_2'
+                },
+                {name:'MERRA-2 M2T1NXLND: Land Surface Diagnostics V5.12.4 (0.5x0.625 deg)',
+                  label:'MERRA-2_Land_Surface_Diagnostics',
+                  path:"NASA/GSFC/MERRA/lnd/2",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NASA_GSFC_MERRA_lnd_2'
+                },
+                {name:'MERRA-2 M2T1NXRAD: Radiation Diagnostics V5.12.4 (0.5x0.625 deg)',
+                  label:'MERRA-2_Radiation_Diagnostics',
+                  path:"NASA/GSFC/MERRA/rad/2",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NASA_GSFC_MERRA_rad_2'
+                },
+                {name:'MERRA-2 M2T1NXSLV: Single-Level Diagnostics V5.12.4 (0.5x0.625 deg)',
+                  label:'MERRA-2_Single_Level_Diagnostics',
+                  path:"NASA/GSFC/MERRA/slv/2",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NASA_GSFC_MERRA_slv_2'
+                },
+                {name:'NOAA AVHRR Pathfinder Version 5.3 Collated Global 4km Sea Surface Temperature (4 km)',
+                  label:'NOAA_Sea_Surface_Temperature',
+                  path:"NOAA/CDR/SST_PATHFINDER/V53",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/NOAA_CDR_SST_PATHFINDER_V53'
+                },
+                {name:'HYCOM: Hybrid Coordinate Ocean Model, Sea Surface Elevation (0.08 deg)',
+                  label:'HYCOM_Sea_Surface_Elevation',
+                  path:"HYCOM/sea_surface_elevation",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/HYCOM_sea_surface_elevation'
+                },
+                {name:'HYCOM: Hybrid Coordinate Ocean Model, Water Temperature and Salinity (0.08 deg)',
+                  label:'HYCOM_Ocean_Temperature_and_Salinity',
+                  path:"HYCOM/sea_temp_salinity",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/HYCOM_sea_temp_salinity'
+                },
+                {name:'HYCOM: Hybrid Coordinate Ocean Model, Water Velocity (0.08 deg)',
+                  label:'HYCOM_Water_Velocity',
+                  path:"HYCOM/sea_water_velocity",
+                  url:'https://developers.google.com/earth-engine/datasets/catalog/HYCOM_sea_water_velocity'
+                }];
+                
+  var listDataOptions=[];
+  for (var i = 0; i < dataList.length; i++) {
+    listDataOptions[i]=dataList[i].name;
+  }
+ var getDatasetInfo=ui.Label({value:'Once dataset has been selected, click here for dataset decription and additional citation requirements (opens new tab).',style:{margin:'10px 50px 1px 50px'}});
+  var datasetOptions;
+  var dataSelect = ui.Select({
+    placeholder:'(b) SELECT DATASET',
+    disabled:true,
+    style:{margin: '1px 50px 1px 50px',stretch:'horizontal'},
+    items: listDataOptions,
+    onChange: function() {
+      for (var i = 0; i < dataList.length; i++) {
+        if (dataSelect.getValue()===dataList[i].name){
+          datasetOptions=dataList[i];
+          getDatasetInfo=getDatasetInfo.setUrl(dataList[i].url);
+          datasetCheck(datasetOptions);
+          startDateBox.setDisabled(false);
+          endDateBox.setDisabled(false);
+          select1.setDisabled(false);
+          select2.setDisabled(false);
+        }
+      }
+    }
+  });
+  
+  
+  var variableLabel=ui.Label('Select at least one variable and click Ok.',
+          {//fontSize: '15px',
+          margin: '1px 20px 1px 50px',
+          fontWeight: 'bold'});
+  var variableSelect=ui.Button({label:'CLICK TO SELECT VARIABLES',
+     disabled:true,
+     style:{margin: '1px 50px 1px 50px',stretch:'horizontal'}
+  });
+  var variableSelectClose=ui.Button({label:'Ok',
+     disabled:false,
+     style:{margin: '5px 50px 1px 50px',stretch:'horizontal'}
+  })
+  var variableSelectAll=ui.Button({label:'Select all',
+     disabled:false,
+     style:{margin: '10px 50px 1px 50px',stretch:'horizontal'}
+  });
+  var variableUnselectAll=ui.Button({label:'Unselect all',
+     disabled:false,
+     style:{margin: '10px 50px 1px 50px',stretch:'horizontal'}
+  });
+  
+  //2. Select variables
+  var variableSelectLabel=ui.Label({value:'2. Select variables:',
+          style:{//fontSize: '15px',
+          margin: '10px 50px 10px 50px',
+          fontWeight: 'bold'}});
+          
+  
+  
+  //2. Date ranges
+  var dateLabel=ui.Label({value:'3. Define start/end dates in YYYY-MM-DD format:',
+          style:{//fontSize: '15px',
+          margin: '10px 50px 10px 50px',
+          fontWeight: 'bold'}});
+  var startDateBox=ui.Textbox({
+    placeholder: '1979-01-02',
+    disabled:true,
+    style:{stretch:'horizontal',margin: '1px 50px 1px 50px'},
+    onChange: function() {
+      inputVars=inputVars.set('dateStart',startDateBox.getValue());
+    }
+  });
+  
+  var endDateBox=ui.Textbox({
+    placeholder: new Date().toISOString().slice(0,10),
+    disabled: true,
+    style:{stretch:'horizontal',margin: '1px 50px 1px 50px'},
+    onChange: function() {
+      inputVars=inputVars.set('dateEnd',endDateBox.getValue());
+    }
+  });
+  
+  // Dropdown menus for range of months
+  var months_dropdown = {
+    January: [1],February: [2],March: [3],April: [4],May: [5],
+    June: [6],July: [7],August: [8],September: [9],October: [10],
+    November: [11],December: [12]
+  };
+  var months = [
+      'January', 'February', 'March', 'April', 'May',
+      'June', 'July', 'August', 'September',
+      'October', 'November', 'December'
+      ];
+  function monthNameToNum(monthname) {
+      var month = months.indexOf(monthname)+1;
+      return month;
+  }
+  var select1 = ui.Select({
+    placeholder:'Month start (default: January)',
+    disabled:true,
+    style:{margin: '1px 50px 1px 50px',stretch:'horizontal'},
+    items: Object.keys(months_dropdown),
+    onChange: function() {
+      inputVars=inputVars.set('monthStart',monthNameToNum(select1.getValue()));
+    }
+  });
+  var select2 = ui.Select({
+    placeholder:'Month end (default: December)',
+    disabled:true,
+    style:{margin: '1px 50px 10px 50px',stretch:'horizontal'},
+    items: Object.keys(months_dropdown),
+    onChange: function() {
+      inputVars=inputVars.set('monthEnd',monthNameToNum(select2.getValue()));
+    }
+  });
+  
+  
+  
+  //4. Export format options
+  var exportInfoLabel=ui.Label({value:'4. Select export data format:',
+        style:{//fontSize: '15px',
+        margin: '1px 50px 1px 50px',
+        fontSize:'15px',
+        fontWeight: 'bold'}});
+  var exportInfoCheck1=ui.Checkbox({label:'Table of mean values across entire RoI (average value of all points/entire polygon)',
+        value:false,
+        disabled:true,
+        style:{//fontSize: '15px',
+        margin: '1px 50px 1px 50px'}});
+  var exportInfoCheck2=ui.Checkbox({label:'Table of values from each individual grid location selected/that overlap with point/polygon RoI',
+        value:false,
+        disabled:true,
+        style:{//fontSize: '15px',
+        margin: '1px 50px 1px 50px'}});
+  var exportInfoCheck3=ui.Checkbox({label:'ASCII grid (large areas may take time)',
+        value:false,
+        disabled:true,
+        style:{//fontSize: '15px',
+        margin: '1px 50px 1px 50px'}});
+        
+  exportInfoCheck1.onChange(function(){
+    if(exportInfoCheck1.getValue()===true){
+      exportInfoCheck1.setValue(true);
+      exportInfoCheck2.setValue(false);
+      exportInfoCheck3.setValue(false);
+      gridTypeCheck1.setDisabled(false);
+      gridTypeCheck2.setDisabled(false);
+      inputVars=inputVars.set('tableAsciivalue',1);
+      // if(){
+    }
+  });
+  exportInfoCheck2.onChange(function(){
+    if(exportInfoCheck2.getValue()===true){
+      exportInfoCheck1.setValue(false);
+      exportInfoCheck2.setValue(true);
+      exportInfoCheck3.setValue(false);
+      gridTypeCheck1.setDisabled(false);
+      gridTypeCheck2.setDisabled(false);
+      inputVars=inputVars.set('tableAsciivalue',2);
+    }
+  });
+  exportInfoCheck3.onChange(function(){
+    if(exportInfoCheck3.getValue()===true){
+      exportInfoCheck1.setValue(false);
+      exportInfoCheck2.setValue(false);
+      exportInfoCheck3.setValue(true);
+      inputVars=inputVars.set('tableAsciivalue',3);
+    }
+  });
+  
+  
+  
+  //6. Region of interest options
+  var CoordsLabel=ui.Label({
+        value: '6. Define Point(s)/Region of Interest (up to 50 points, or one polygon; make sure above options selected first)',
+        style: {
+          margin: '10px 50px 1px 50px',
+          fontSize: '15px',
+          fontWeight: 'bold'
+          }
+      });
+  var coordsTextBoxLat=ui.Textbox({
+    value:'',
+    placeholder:'Enter list of latitude coordinates: lat1,lat2,...',
+    disabled:true,
+    style:{stretch:'horizontal',
+          // width:'320px',
+      margin: '1px 50px 1px 50px'
+    }
+  });
+  coordsTextBoxLat.onChange(function(){
+    var newLat=coordsTextBoxLat.getValue().replace(/\s/g,'').replace(/,\s*$/, "");
+    coordsTextBoxLat.setValue(newLat);
+  })
+  var coordsTextBoxLon=ui.Textbox({
+    value:'',
+    placeholder:'Enter list of longitude coordinates: lon1,lon2,...',
+    disabled:true,
+    style:{stretch:'horizontal',
+          // width:'320px',
+          margin: '1px 50px 1px 50px'}
+  });
+  coordsTextBoxLon.onChange(function(){
+    var newLon=coordsTextBoxLon.getValue().replace(/\s/g,'').replace(/,\s*$/, "");
+    coordsTextBoxLon.setValue(newLon);
+  })
+  var coordsTextBoxNames=ui.Textbox({
+    value:'',
+    placeholder:'(Optional) Enter site name(s): nameA,nameB,...',
+    disabled:true,
+    style:{stretch:'horizontal',
+          // width:'320px',
+          margin: '1px 50px 1px 50px'}
+  });
+  coordsTextBoxNames.onChange(function(){
+    var newNames=coordsTextBoxNames.getValue().replace(/\s/g,'').replace(/,\s*$/, "");
+    coordsTextBoxNames.setValue(newNames);
+  })
+  
+  //Error panel that appears if there is an error in user data entry
+  var CoordsErrorPanel=ui.Panel({
+      style: {
+      position: 'top-center'
+      }
+    });
+  var CoordsErrorLabel=ui.Label({
+        value: 'Error importing coordinates.',
+        style: {
+          margin: '1px 10px 1px 10px',
+          fontSize: '15px',
+          fontWeight: 'bold',
+          stretch:'horizontal',
+          textAlign:'center'
+          }
+      });
+  var CoordsErrorLabel1=ui.Label({
+        value: 'Check: (1) coordinate lists are equal length;',
+        style: {
+          margin: '1px 1px 1px 1px',
+          fontSize: '12px',
+          // fontWeight: 'bold',
+          stretch:'horizontal',
+          textAlign:'center'
+          }
+      });
+  var CoordsErrorLabel2=ui.Label({
+        value: '(2) if coordinate list is properly formatted (i.e comma separated and no comma at end of list);',
+        style: {
+          margin: '1px 1px 1px 1px',
+          fontSize: '12px',
+          // fontWeight: 'bold',
+          stretch:'horizontal',
+          textAlign:'center'
+          }
+      });
+  var CoordsErrorLabel3=ui.Label({
+        value: '(3) not more than 50 locations are being queried.',
+        style: {
+          margin: '1px 1px 1px 1px',
+          fontSize: '12px',
+          // fontWeight: 'bold',
+          stretch:'horizontal',
+          textAlign:'center'
+          }
+      });
+  var CoordsErrorLabel4=ui.Label({
+        value: 'If importing a polygon, check list contains 3 or more pairs of coordinates.',
+        style: {
+          margin: '1px 1px 1px 1px',
+          fontSize: '12px',
+          // fontWeight: 'bold',
+          stretch:'horizontal',
+          textAlign:'center'
+          }
+      });
+  var CoordsErrorButton=ui.Button({label:'Go back',style:{stretch:'horizontal'}});
+  CoordsErrorButton.onClick(function(){
+    Map.remove(CoordsErrorPanel);
+  });
+  CoordsErrorPanel.add(CoordsErrorLabel).add(CoordsErrorLabel1).add(CoordsErrorLabel2)
+    .add(CoordsErrorLabel3).add(CoordsErrorLabel4).add(CoordsErrorButton);
+  var pointButton=ui.Button({label:'Import as point(s)',disabled:true,style:{stretch:'horizontal',margin: '1px 50px 1px 50px'}});
+  var polygonButton=ui.Button({label:'Import as polygon',disabled:true,style:{stretch:'horizontal',margin: '1px 50px 1px 50px'}});
+  
+  var CoordsLabel1=ui.Label({
+        value: 'Option 2: define custom point location/polygon coordinates:',
+        style: {
+          margin: '10px 50px 1px 50px',
+          fontSize: '15px',
+          // fontWeight: 'bold'
+          }
+      });
+  var CoordsLabel2=ui.Label({
+        value: 'Option 1: draw custom RoI using drawing tools in top left of map.',
+        style: {
+          margin: '1px 50px 1px 50px',
+          fontSize: '15px',
+          // fontWeight: 'bold',
+          stretch:'horizontal'
+          }
+      });
+  
+  var CoordsLabel3=ui.Label({
+        value: 'Note: mixing geometry types is not supported.',
+        style: {
+          margin: '1px 50px 1px 50px',
+          fontSize: '12px',
+          // fontWeight: 'bold',
+          stretch:'horizontal'
+          }
+      });
+      
+  //if using drawing tools...
+  drawingTools.onDraw(function(){
+    createRoiGridButton.setDisabled(false);
+    coordsTextBoxLat.setDisabled(true);
+    coordsTextBoxLon.setDisabled(true);
+    // coordsTextBoxNames.setDisabled(true);
+    coordsTextBoxLat.setValue([]);
+    coordsTextBoxLon.setValue([]);
+    // coordsTextBoxNames.setValue([]);
+    pointButton.setDisabled(true);
+    polygonButton.setDisabled(true);
+  });
+  
+  // 5. select model grid or across grid data calculation for results
+  var gridTypeLabel=ui.Label({value:'5. Select how data are to be analysed:',
+        style:{
+        margin: '1px 50px 1px 50px',
+        fontSize:'15px',
+        fontWeight: 'bold'}});
+  var gridTypeCheck1=ui.Checkbox({label:'Results from nearest grid centroids returned',
+        value:false,
+        disabled:true,
+        style:{
+        margin: '1px 50px 1px 50px'}});
+  var gridTypeCheck2=ui.Checkbox({label:'Weighted mean of closest grid values to each location',
+        value:false,
+        disabled:true,
+        style:{
+        margin: '1px 50px 1px 50px'}});
+  
+  gridTypeCheck1.onChange(function(){
+    drawingTools.setShown(true);
+    if(gridTypeCheck1.getValue()===true){
+      gridTypeCheck1.setValue(true);
+      gridTypeCheck2.setValue(false);
+      inputVars=inputVars.set('closestGrid',true)
+                         .set('reducer',ee.Reducer.mean().unweighted());
+      coordsTextBoxLat.setDisabled(false);
+      coordsTextBoxLon.setDisabled(false);
+      coordsTextBoxNames.setDisabled(false);
+      pointButton.setDisabled(false);
+      polygonButton.setDisabled(false);
+    }
+  });
+  gridTypeCheck2.onChange(function(){
+    drawingTools.setShown(true);
+    if(gridTypeCheck2.getValue()===true){
+      gridTypeCheck1.setValue(false);
+      gridTypeCheck2.setValue(true);
+      inputVars=inputVars.set('closestGrid',false)
+                         .set('reducer',ee.Reducer.mean());
+      coordsTextBoxLat.setDisabled(false);
+      coordsTextBoxLon.setDisabled(false);
+      coordsTextBoxNames.setDisabled(false);
+      pointButton.setDisabled(false);
+      polygonButton.setDisabled(false);
+    }
+  });
+  
+  
+  // 7. Create gridded ROI
+  var createRoiGridButton=ui.Button({label:'7. Generate gridded area of interest',
+                                          disabled:true,
+                                          style:{stretch:'horizontal',
+                                          margin:'5px 50px 1px 50px'
+  }});
+  
+  
+      
+  // 8. Get data
+  var goButton=ui.Button({label:'8. Get data',disabled:true,style:{stretch:'horizontal',margin: '10px 50px 1px 50px'}});
+  
+  
+  
+  
+  
+  /////////////////////////////////////////////////////////////////
+  //code to user-proof mainPanel
+  
+  //Loading panel to add to map while evaluate functions are processing
+  //This is also used in other parts of the code!
+  var loadingPanel=ui.Panel({
+      style: {
+      position:'top-center',
+      shown:false
+      }
+    });
+  var loadingLabel=ui.Label({value:'Processing, please wait...',
+        style: {
+          fontSize: '20px',
+          fontWeight: 'bold',
+          textAlign:'center',
+          stretch:'horizontal'
+        }});
+  loadingPanel.add(loadingLabel);
+  Map.add(loadingPanel);
+  
+  var errorSelectMessage=ui.Panel({
+                      style: {
+                      position: 'top-center',
+                      shown:false
+                      }
+                    });
+  var errorSelectMessageLabel=ui.Label('Please select at least one variable');
+  errorSelectMessage.add(errorSelectMessageLabel)
+  Map.add(errorSelectMessage)
+  
+  
+  
+  //stop more than one dataset being selected (function defined first)
+  function datasetCheck(datasetOptions){
+    if(loadingPanel.style().get('shown')===false){
+      loadingPanel.style().set('shown',true);
+    }
+    dataSelect.setDisabled(true)
+    variableSelect.setDisabled(true);
+    startDateBox.setDisabled(true);
+    endDateBox.setDisabled(true);
+    inputVars=inputVars.set('variablesSelected',[])
+        var displayImage=ee.ImageCollection(datasetOptions.path).limit(1);
+        var nominalScale=ee.Image(displayImage.first()).projection().nominalScale();
+        var bandSelect=ee.Algorithms.If(ee.Number(ee.String(datasetOptions.path)
+                  .compareTo(ee.String('ECMWF/ERA5_LAND/DAILY_AGGR'))).eq(0)
+                  .or(ee.Number(ee.String(datasetOptions.path)
+                  .compareTo(ee.String('ECMWF/ERA5_LAND/MONTHLY_AGGR'))).eq(0)),
+            ee.String('temperature_2m'),
+            ee.String(ee.List(ee.Image(displayImage.first()).bandNames()).get(0)))
+            
+        var band
+        var reduction=ee.Image(displayImage.first()).select([bandSelect]).reduceRegion({
+            reducer:ee.Reducer.percentile([20,80]),
+            geometry:ee.Geometry.Polygon([180,-90,360,-90,360,90,180,90]),
+            scale:50000,
+            bestEffort:true
+          });
+        var minMax=ee.List([ee.List(ee.Dictionary(reduction).values()).reduce(ee.Reducer.min()),
+                          ee.List(ee.Dictionary(reduction).values()).reduce(ee.Reducer.max())]);
+        var visParams=ee.Algorithms.If(ee.Dictionary(ee.ImageCollection(datasetOptions.path)
+                                          .toDictionary()).contains('visualization_0_min'),
+        {bands:displayImage.get('visualization_0_bands'),
+          min:displayImage.get('visualization_0_min'),
+          max:displayImage.get('visualization_0_max'),
+          palette:displayImage.get('visualization_0_palette'),
+          opacity:0.5
+        },
+        {bands:[bandSelect],
+          min:ee.Algorithms.If(ee.String(bandSelect).equals('temperature_2m'),
+            ee.ImageCollection('ECMWF/ERA5/MONTHLY').get('visualization_0_min'),
+           ee.List(minMax).get(0)),
+          max:ee.Algorithms.If(ee.String(bandSelect).equals('temperature_2m'),
+            ee.ImageCollection('ECMWF/ERA5/MONTHLY').get('visualization_0_max'),
+           ee.List(minMax).get(1)),
+          palette:ee.Algorithms.If(ee.String(bandSelect).equals('temperature_2m'),
+            ee.ImageCollection('ECMWF/ERA5/MONTHLY').get('visualization_0_palette'),
+            ['blue','cyan','green','yellow','red']),
+          opacity:0.5
+        }).evaluate(function(visParams1){
+          Map.layers().set(0,ee.Image(displayImage.first()).visualize(visParams1));
+        });
+        
+      var variableLabelTitle=ui.Label(datasetOptions.name,{//fontSize: '15px',
+          margin: '1px 20px 1px 50px',
+          fontWeight: 'bold'}) 
+      variablePanel.clear()
+      variablePanel.add(variableLabelTitle)
+                   .add(variableLabel)
+                   .add(variableSelectAll)
+                   .add(variableUnselectAll)
+      ee.Image(ee.ImageCollection(datasetOptions.path).first()).bandNames()
+            .evaluate(function(result1){
+            //update button display
+            inputVars=inputVars.set('variablesSelected',ee.List(result1))
+            variableSelect.setLabel(result1.length+' variables selected');
+            var variableCheckboxes
+            var selectedVariables=[];
+            var addRemoveSelectedVariables=function(value){
+              
+                var variablesOut=ee.List(variableCheckboxes.map(function(checkbox){
+                  var selectedVariables1=[]
+                  if(checkbox.getValue()===true){
+                    selectedVariables1=checkbox.getLabel()
+                  } 
+                  return selectedVariables1
+                }));
+                inputVars=inputVars.set('variablesSelected',variablesOut.distinct().remove([]));
+              } 
+            //update panel display
+            var checkbox
+            variableCheckboxes=result1.map(function(varName){
+              checkbox=ui.Checkbox({label:varName,
+                                        value:true,
+                                        style:{margin: '1px 50px 1px 50px'},
+                                        onChange:addRemoveSelectedVariables
+                                      });
+              variablePanel.add(checkbox)
+              return checkbox
+            })
+            variablePanel.add(variableSelectClose)
+            checkbox.onChange(addRemoveSelectedVariables)
+            
+            //select all variables
+            variableSelectAll.onClick(function(){
+              variableCheckboxes.map(function(checkbox){
+                checkbox.setValue(true)
+              })
+              var variablesOut=ee.List(variableCheckboxes.map(function(checkbox){
+                    selectedVariables=checkbox.getLabel();
+                  return selectedVariables
+                }));
+                inputVars=inputVars.set('variablesSelected',variablesOut.distinct());
+            })
+            variableUnselectAll.onClick(function(){
+              variableCheckboxes.map(function(checkbox){
+                checkbox.setValue(false)
+              })
+              inputVars=inputVars.set('variablesSelected',[])
+            })
+            
+            // variableCheck
+            variableSelect.onClick(function(){
+              variableSelectClose.setDisabled(false);
+              if(ui.root.widgets().length()===3){
+                 ui.root.remove(ui.root.widgets().get(1));//adds panel to root (*not* Map)
+              }
+              ui.root.remove(ui.root.widgets().get(0))
+              ui.root.insert(0,variablePanel);
+            });
+            variableSelectClose.onClick(function(){
+                ee.List(inputVars.get('variablesSelected')).evaluate(function(list){
+                  if(list.length>0){
+                    errorSelectMessage.style().set({shown:false})
+                    variableSelectClose.setDisabled(true);
+                    variableSelect.setLabel(list.length+' variables selected');
+                    if(ui.root.widgets().length()===3){
+                       ui.root.remove(ui.root.widgets().get(1));//adds panel to root (*not* Map)
+                    }
+                    ui.root.remove(ui.root.widgets().get(0))
+                    ui.root.insert(0,mainPanel);
+                    
+                  } else {
+                    errorSelectMessage.style().set({shown:true})
+                }
+              
+              })
+              
+              selectedVariables=[];
+              
+            })
+      })
+        
+        var datesImColl=ee.List([ee.Date(ee.List(ee.ImageCollection(datasetOptions.path).aggregate_array('system:time_start'))
+                                    .reduce(ee.Reducer.min())).format('YYYY-MM-dd'),
+                                ee.Date(ee.List(ee.ImageCollection(datasetOptions.path).aggregate_array('system:time_start'))
+                                    .reduce(ee.Reducer.max())).format('YYYY-MM-dd'),
+                                ee.Date(ee.List(ee.ImageCollection(datasetOptions.path).aggregate_array('system:time_end'))
+                                    .reduce(ee.Reducer.max())).format('YYYY-MM-dd')])
+                                .evaluate(function(result){
+                                  
+                                  var imageProj=ee.Image(displayImage.first())
+                                      .select([ee.List(ee.Image(displayImage.first()).bandNames()).get(0)])
+                                      .projection().getInfo();
+                                  var bandNames=ee.List(ee.Image(displayImage.first()).bandNames()).evaluate(function(result1){
+                                    variableSelect.setLabel(result1.length+' variables selected');
+                                    // variablePanel.clear()
+                                    inputVars=inputVars.set('variablesSelected',result1);
+                                  });
+                                  if (result[2]!==undefined || result[2]!==null){
+                                    
+                                    inputVars=inputVars.set('dataset',datasetOptions.name)
+                                          .set('description',datasetOptions.label)
+                                          .set('dateStart',result[0])
+                                          .set('dateEnd',result[2])
+                                          .set('imColl',ee.ImageCollection(datasetOptions.path))
+                                          .set('transform',imageProj.transform)
+                                          .set('crs',imageProj.crs);
+                                          
+                                          startDateBox.setValue(result[0]);
+                                          endDateBox.setValue(result[2]);
+                                          startDateBox.setDisabled(false);
+                                          endDateBox.setDisabled(false);
+                                          variableSelect.setDisabled(false);
+                                          select1.setDisabled(false);
+                                          select2.setDisabled(false);
+                                          exportInfoCheck1.setDisabled(false);
+                                          exportInfoCheck2.setDisabled(false);
+                                          variableSelect.setDisabled(false);
+                                          dataSelect.setDisabled(false);
+                                          loadingPanel.style().set('shown',false);
+                                          
+                                  } else {
+                                    inputVars=inputVars.set('dataset',datasetOptions.name)
+                                          .set('description',datasetOptions.label)
+                                          .set('dateStart',result[0])
+                                          .set('dateEnd',result[1])
+                                          .set('imColl',ee.ImageCollection(datasetOptions.path))
+                                          .set('transform',imageProj.transform)
+                                          .set('crs',imageProj.crs);
+                                          
+                                          startDateBox.setValue(result[0]);
+                                          endDateBox.setValue(result[1]);
+                                          startDateBox.setDisabled(false);
+                                          endDateBox.setDisabled(false);
+                                          variableSelect.setDisabled(false);
+                                          select1.setDisabled(false);
+                                          select2.setDisabled(false);
+                                          exportInfoCheck1.setDisabled(false);
+                                          exportInfoCheck2.setDisabled(false);
+                                          variableSelect.setDisabled(false);
+                                          dataSelect.setDisabled(false);
+                                          loadingPanel.style().set('shown',false);
+                                        
+                                  }
+                                  
+                                          
+                                  
+                                });
+                                
+        
+                                
+
+    return inputVars;
+  }
+  
+  /////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////
+  
+  //////
+  //Import data as points option
+  var geomType;
+  var listCoordsNames='';
+  var listCoordsNamesLength;
+  var listCoordsLat;
+  var listCoordsLon;
+  var listCoordsLatLength;
+  var listCoordsLonLength;
+  var firstCondition;
+  var singleMultiCondition;
+  var secondCondition;
+  var listCoordsLengthCondition;
+  
+  pointButton.onClick(function(){
+    geomType='Point';
+    inputVars=inputVars.set('geomType',geomType);
+    
+    //remove superfluous layers from map (leaves background T map)
+    while (Map.layers().length()>1){
+                Map.remove(Map.layers().get(1));
+              }
+              
+    //if site names are defined, get these from the textbox
+    if(coordsTextBoxNames.getValue()!==''){
+      listCoordsNames=coordsTextBoxNames.getValue().split(',');
+      listCoordsNamesLength=listCoordsNames.length;
+      inputVars=inputVars.set('siteNames',listCoordsNames);
+    } else {
+      inputVars=inputVars.set('siteNames','');
+    }
+    
+    //nested series of checks to ensure data have been entered correctly by the user
+    firstCondition=coordsTextBoxLat.getValue()!=='' && coordsTextBoxLon.getValue()!=='';
+    if(firstCondition){ //checks if lat/lon boxes are empty or not
+      listCoordsLat=JSON.parse('['+coordsTextBoxLat.getValue()+']');
+      listCoordsLon=JSON.parse('['+coordsTextBoxLon.getValue()+']');
+      listCoordsLatLength=listCoordsLat.length;
+      listCoordsLonLength=listCoordsLon.length;
+      listCoordsLengthCondition=listCoordsLatLength<=50;
+      singleMultiCondition=(coordsTextBoxNames.getValue()==='' ||
+          (listCoordsNamesLength===listCoordsLatLength && exportInfoCheck2.getValue()===true) ||
+          (listCoordsNamesLength===1 && exportInfoCheck1.getValue()===true));
+      
+      if(listCoordsLengthCondition){  //checks if number of coords <=50 (produces memory error otherwise)
+        if(singleMultiCondition){ //checks if number of lat/lon pairs matches num of site names
+          secondCondition=listCoordsLatLength===listCoordsLonLength && listCoordsLatLength===1;
+          if(secondCondition){    //checks if single point
+            createRoiGridButton.setDisabled(false);
+            geometry=ee.Geometry.Point(ee.List(listCoordsLon).zip(ee.List(listCoordsLat)).get(0),'EPSG:4326');
+            Map.addLayer(geometry,{color:'red'},'Imported RoI');
+          } else if (listCoordsLatLength===listCoordsLonLength && listCoordsLatLength>1){ //checks if multipoint
+            createRoiGridButton.setDisabled(false);
+            geometry=ee.Geometry.MultiPoint(ee.List(listCoordsLon).zip(ee.List(listCoordsLat)),'EPSG:4326');
+            Map.addLayer(geometry,{color:'red'},'Imported RoI');
+          } else {
+            Map.add(CoordsErrorPanel);
+          }
+        } else {
+          Map.add(CoordsErrorPanel);
+        }
+      } else {
+        Map.add(CoordsErrorPanel);
+      }
+      } else {
+        Map.add(CoordsErrorPanel);
+    }
+  });
+  
+  
+  //////
+  //Import data as polygon option
+  
+  polygonButton.onClick(function(){
+    geomType='Polygon';
+    inputVars=inputVars.set('geomType',geomType);
+    while (Map.layers().length()>1){
+                Map.remove(Map.layers().get(1));
+              }
+              
+    if(coordsTextBoxNames.getValue()!==''){
+      listCoordsNames=coordsTextBoxNames.getValue().split(',');
+      listCoordsNamesLength=listCoordsNames.length;
+      inputVars=inputVars.set('siteNames',listCoordsNames);
+    } 
+    firstCondition=coordsTextBoxLat.getValue()!=='' && coordsTextBoxLon.getValue()!=='';
+    if(firstCondition){
+      listCoordsLat=JSON.parse('['+coordsTextBoxLat.getValue()+']');
+      listCoordsLon=JSON.parse('['+coordsTextBoxLon.getValue()+']');
+      listCoordsLatLength=listCoordsLat.length;
+      listCoordsLonLength=listCoordsLon.length;
+      singleMultiCondition=(listCoordsNames==='' || listCoordsNames===null ||
+          (listCoordsNamesLength===listCoordsLatLength && exportInfoCheck2.getValue()===true) ||
+          (listCoordsNamesLength===1 && exportInfoCheck1.getValue()===true));
+      if(singleMultiCondition){
+        secondCondition=listCoordsLatLength===listCoordsLonLength && listCoordsLatLength>=3;
+        if(secondCondition){
+          createRoiGridButton.setDisabled(false);
+          geometry=ee.Geometry.Polygon(ee.List(listCoordsLon).zip(ee.List(listCoordsLat)),'EPSG:4326');
+          Map.addLayer(geometry,{color:'red'},'Imported RoI');
+        } else {
+          Map.add(CoordsErrorPanel);
+        }
+      } else {
+        Map.add(CoordsErrorPanel);
+      }
+    } else {
+      Map.add(CoordsErrorPanel);
+    }
+  });
+  
+  /////////////
+  // Create gridded ROI
+  
+  createRoiGridButton.onClick(function(){
+    if(loadingPanel.style().get('shown')===false){
+      loadingPanel.style().set('shown',true);
+    }
+    while (Map.layers().length()>1){
+                Map.remove(Map.layers().get(1));
+              }
+    //takes drawingTools defined geometry, or manually entered geometry
+    var geom;
+    if(geometry!==undefined){
+      geom=geometry;
+    } else {
+      if (drawingTools.layers().get(0).geometries().length()===1){
+        geom=ee.Geometry(drawingTools.layers().get(0).geometries().get(0));
+      } else {
+        geomType=ee.Geometry(drawingTools.layers().get(0).geometries().get(0)).type().getInfo();
+        var geomList=[];
+        for (var i = 0; i < drawingTools.layers().get(0).geometries().length(); i++) {
+         geomList[i]=ee.Geometry(drawingTools.layers().get(0).geometries().get(i)).coordinates();
+        }
+        if (geomType==='Point'){
+          geom=ee.Geometry.MultiPoint(geomList);
+        } else if (geomType==='Polygon' || geomType==='Rectangle'){
+          geom=ee.Geometry.MultiPolygon(geomList);
+        } else if (geomType==='LineString'){
+          geom=ee.Geometry.MultiLineString(geomList);
+        }
+        
+        inputVars=inputVars.set('geomType',geomType);
+      }
+    }
+    inputVars=inputVars.set('initialGeom',geom);
+    var initialCoords;
+    var initialFC;
+    var crs=inputVars.get('crs');
+    var bufferRadius=ee.Number(ee.List(inputVars.get('transform')).get(0)).divide(2);
+    //define initial ROI grid (not matching exactly to input image grid squares)
+    
+    
+    //define initial ROI grid (not matching exactly to input image grid squares)
+    inputVars.get('geomType').evaluate(function(type){
+      var initialGeomGrid;
+      if(type==='Point'){
+        var pointCoords=ee.Geometry(inputVars.get('initialGeom')).coordinates()
+          pointCoords=ee.Algorithms.If(ee.Number(ee.List(pointCoords).flatten().size()).eq(2),
+                      ee.List([0]).set(0,pointCoords),pointCoords);
+          initialGeomGrid=ee.List(pointCoords).map(function(point){
+            return ee.Feature(ee.Geometry.Point(point).buffer(bufferRadius,0,crs).bounds())
+                      .set('dummy',1);
+          });
+          inputVars=inputVars.set('initialGridROI',ee.FeatureCollection(initialGeomGrid));
+          
+      } else {
+        initialGeomGrid=ee.Feature(ee.Geometry(inputVars.get('initialGeom')));
+        inputVars=inputVars.set('initialGridROI',ee.FeatureCollection(initialGeomGrid));
+      }
+      
+    });
+    
+    var geom1=ee.Geometry(inputVars.get('initialGeom')).buffer(ee.Number(bufferRadius).multiply(3),0,crs)//.bounds();
+    var centroids=ee.Image.pixelLonLat()
+              .reproject(inputVars.get('crs'),inputVars.get('transform'));
+    var scale=ee.Image(centroids).projection().nominalScale();
+    
+    var mapCoords=ee.List(ee.Dictionary(ee.Image(centroids).reduceRegion({
+      reducer:ee.Reducer.toList().unweighted(),
+      scale:scale,
+      geometry:ee.Geometry(geom1)
+    })).toArray(null,0).toList());
+    mapCoords=ee.List([ee.List(mapCoords).get(1),ee.List(mapCoords).get(0)]);
+    var geomGrid;
+    ee.List(ee.List(mapCoords).get(0)).size().evaluate(function(size){
+      
+      if(size>1){
+      geomGrid=ee.FeatureCollection(ee.List(ee.Geometry.MultiPoint(ee.List(mapCoords.get(0))
+                        .zip(ee.List(mapCoords.get(1))),crs).coordinates())
+                  .map(function(point){
+                    return ee.Feature(ee.Geometry.Point(point).buffer(bufferRadius,0,crs).bounds());
+                  }));
+      geomGrid=geomGrid.filterBounds(ee.Geometry(inputVars.get('initialGeom')));
+                  
+      inputVars=inputVars.set('gridMatchROI',ee.FeatureCollection(geomGrid));
+      } else {
+        geomGrid=ee.Feature(ee.Geometry.Point(ee.List(mapCoords).flatten(),crs)
+                    .buffer(bufferRadius,0,crs).bounds());
+        inputVars=inputVars.set('gridMatchROI',ee.FeatureCollection(geomGrid));
+      }
+      
+      inputVars.get('closestGrid').evaluate(function(result){
+        if(result===true){
+          Map.addLayer(ee.FeatureCollection(inputVars.get('gridMatchROI')),{color:'blue'});
+          inputVars=inputVars.set('analysisROI',ee.FeatureCollection(inputVars.get('gridMatchROI')));
+        } else if (result===false){
+          Map.addLayer(ee.FeatureCollection(inputVars.get('initialGridROI')),{color:'red'});
+          inputVars=inputVars.set('analysisROI',ee.FeatureCollection(inputVars.get('initialGridROI')));
+        }
+        goButton.setDisabled(false);
+        loadingPanel.style().set('shown',false);
+      });
+      
+    });
+  });
+  
+  /////////////////
+  //Get the data for each grid point/RoI
+  goButton.onClick(function(){
+    if(loadingPanel.style().get('shown')===false){
+      loadingPanel.style().set('shown',true);
+    }
+    goButton.setDisabled(true);
+    var imColl=ee.ImageCollection(inputVars.get('imColl'))
+                .filterDate(inputVars.get('dateStart'),inputVars.get('dateEnd'))
+                .select(inputVars.get('variablesSelected'))
+                .filter(ee.Filter.calendarRange(inputVars.get('monthStart'),inputVars.get('monthEnd'),'month'));
+   
+    //assign site names and get data from im collection
+    ee.List([inputVars.get('tableAsciivalue'),
+    inputVars.get('siteNames'),
+    inputVars.get('geomType')])
+    .evaluate(function(resultInput){
+      
+    var analysisFlag=resultInput[0];
+    var siteNames=resultInput[1];
+    var geomType=resultInput[2];
+      var ROI=ee.FeatureCollection(inputVars.get('analysisROI'));
+      if(analysisFlag==1 || analysisFlag==2){
+        var roiSize;
+        var listNum;
+        var listEl;
+        var featCollList;
+        var output;
+        var reducer;
+        if(gridTypeCheck1.getValue()===true){
+          reducer=ee.Reducer.mean().unweighted();
+        } else if (gridTypeCheck2.getValue()===true){
+          reducer=ee.Reducer.mean();
+        }
+        
+        if(analysisFlag==1){
+          ROI=ee.FeatureCollection(ROI).union(10);
+        }
+        var crs=ee.String(inputVars.get('crs'));
+        if(siteNames.length===0 || siteNames===undefined){
+          roiSize=ee.FeatureCollection(ROI).size();
+          listNum=ee.Number(roiSize).subtract(1);
+          listEl=ee.List.sequence(0,listNum,1);
+          featCollList=ee.FeatureCollection(ROI).toList(roiSize);
+          output=ee.List(listEl).map(function(num){
+            var roiGeom=ee.Geometry(ee.Feature(featCollList.get(num)).geometry());
+            var roiCentroid=ee.Geometry(roiGeom).centroid(1,crs);
+            var centLat=ee.Number(ee.List(ee.Geometry(roiCentroid).coordinates()).get(1)).format('%.5f');
+            var centLon=ee.Number(ee.List(ee.Geometry(roiCentroid).coordinates()).get(0)).format('%.5f');
+            var data=ee.ImageCollection(imColl).map(function(im){
+              var imData=ee.Image(im).reduceRegion({
+                reducer:reducer,
+                scale:1000,
+                geometry:roiGeom,
+                crs:crs
+              }).set('system:time_start',ee.Image(im).get('system:time_start'))
+                .set('date',ee.Image(im).date().format('YYYYMMdd HHmm'))
+                .set('centroidLatLon',[centLat,centLon])
+                .set('siteName',ee.String(ee.String('Site').cat(ee.Number(num).int()).cat(' ').cat(ee.String(centLat))
+                                            .cat(' ').cat(ee.String(centLon))).replace("\\.", ",",'g'));
+              return ee.Feature(null).set(ee.Dictionary(imData));
+            });
+            return ee.FeatureCollection(data);
+          });
+        } else {
+          var siteNamesList=ee.List(siteNames);
+          roiSize=ee.FeatureCollection(ROI).size();
+          listNum=ee.Number(roiSize).subtract(1);
+          listEl=ee.List.sequence(0,listNum,1);
+          featCollList=ee.FeatureCollection(ROI).toList(roiSize);
+          var initialGeom;
+          var initialGeomWNames;
+          if(geomType==='Point'&&siteNames.length>0){
+            initialGeom=ee.List(ee.Geometry(inputVars.get('initialGeom')).coordinates());
+            initialGeomWNames=ee.List(listEl).map(function(num){
+              return ee.Feature(ee.Geometry.Point(initialGeom.get(num)))
+                        .set('siteName',siteNamesList.get(num));
+            });
+          } else if (geomType==='Point'&&siteNames.length===0) {
+            initialGeom=ee.List(ee.Geometry(inputVars.get('initialGeom')).coordinates());
+            initialGeomWNames=ee.List(listEl).map(function(num){
+              return ee.Feature(ee.Geometry.Point(initialGeom.get(num)))
+                        .set('siteName',ee.String('Site').cat(ee.Number(num).int()));
+            });
+          }
+          if(geomType==='Point'){
+            var dist=ee.Number(ee.List(inputVars.get('transform')).get(0)).divide(2);
+            var distFilter = ee.Filter.withinDistance({
+                              distance: dist,
+                              leftField: '.geo',
+                              rightField: '.geo',
+                              maxError: 1
+                            });
+            var distSaveAll = ee.Join.saveAll({
+                              matchesKey: 'points',
+                              measureKey: 'distance'
+                            });
+            var spatialJoined = distSaveAll.apply(ee.FeatureCollection(ROI),
+                                      ee.FeatureCollection(initialGeomWNames),distFilter);
+            featCollList=ee.FeatureCollection(spatialJoined).map(function(feat){
+              var site=ee.Feature(ee.FeatureCollection(ee.List(ee.Feature(feat).get('points')))
+                                  .sort('distance',true).first()).get('siteName');
+              return ee.Feature(feat).set('siteName',site);
+            }).toList(roiSize);
+          }
+          output=ee.List(listEl).map(function(num){
+            var roiGeom=ee.Geometry(ee.Feature(featCollList.get(num)).geometry());
+            
+            var roiCentroid=ee.Geometry(roiGeom).centroid(1,crs);
+            var centLat=ee.Number(ee.List(ee.Geometry(roiCentroid).coordinates()).get(1)).format('%.3f');
+            var centLon=ee.Number(ee.List(ee.Geometry(roiCentroid).coordinates()).get(0)).format('%.3f');
+            var data=ee.ImageCollection(imColl).map(function(im){
+              var imData=ee.Image(im).reduceRegion({
+                reducer:reducer,
+                scale:1000,
+                geometry:roiGeom,
+                crs:crs
+              }).set('system:time_start',ee.Image(im).get('system:time_start'))
+                .set('date',ee.Image(im).date().format('YYYYMMdd HHmm'))
+                .set('latLon',[centLat,centLon])
+                .set('siteName',ee.Feature(featCollList.get(num)).get('siteName'));
+              return ee.Feature(null).set(ee.Dictionary(imData));
+            });
+            return ee.FeatureCollection(data);
+          });
+        }
+        
+        //display download panel/results preview
+        
+        var dataToShow=ee.FeatureCollection(output).toList(output.size());
+        
+        ee.List([ee.List(output).map(function(featColl){
+            return ee.String(ee.Feature(ee.FeatureCollection(featColl).first()).get('siteName'));
+          }),
+          ee.List(inputVars.get('variablesSelected')),
+          inputVars.get('description'),
+          ee.ImageCollection(inputVars.get('imColl')).get('visualization_0_bands')])
+          .evaluate(function(result){
+          var siteNamesOrdered=result[0];
+          var properties=result[1];
+          var description=result[2];
+          var propertyName=result[1][0];
+          
+          ee.Algorithms.If(ee.List(inputVars.get('variablesSelected')).contains(propertyName),propertyName,
+                        ee.List(inputVars.get('variablesSelected')).get(0)).evaluate(function(propertyName){
+                          
+          
+          var figurePanel=ui.Panel({
+            style: {
+            width:'33.33%', 
+            position:'top-left'
+            }
+          });
+          var figureLabel1=ui.Label({
+              value: 'Data preview (limited to 1000 observations)',
+              style: {
+                margin: '1px 10px 1px 10px',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                textAlign:'center',
+                stretch:'horizontal'
+                }
+            });
+            var figureLabel1a=ui.Label({
+              value: 'Note: Data preview plot is for illustrative purposes only. If there are >1000 observations in query then',
+              style: {
+                margin: '1px 1px 1px 1px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                textAlign:'center',
+                stretch:'horizontal'
+                }
+            });
+            var figureLabel1b=ui.Label({
+              value: 'the complete dataset queried can be exported using the buttons below.',
+              style: {
+                margin: '1px 1px 1px 1px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                textAlign:'center',
+                stretch:'horizontal'
+                }
+            });
+          
+          
+          var chart;
+          var propertyNamePrev;
+          var siteIndex=0;
+          var siteIndexPrev=-1;
+          chart=ui.Chart.feature.byFeature(ee.FeatureCollection(ee.List(dataToShow).get(0)).limit(1000),'system:time_start',propertyName)
+              .setOptions({title:description+': '+propertyName+' (site: '+
+                            siteNamesOrdered[0]+')',
+                            hAxis:{title:'Datetime'}
+                         });
+          
+          var selectProperty = ui.Select({
+            // placeholder:'2m air temperature',
+            value:propertyName,
+            style:{margin: '10px 10px 1px 1px',stretch:'horizontal'},
+            items: properties,
+            onChange: function() {
+              propertyName=selectProperty.getValue();
+              if(propertyName!==propertyNamePrev){
+                figurePanel.remove(chart);
+                chart=ui.Chart.feature.byFeature(ee.FeatureCollection(ee.List(dataToShow).get(siteIndex)).limit(1000),'system:time_start',propertyName)
+                  .setOptions({title:description+': '+propertyName+' ('+
+                            siteNamesOrdered[siteIndex]+']',
+                            hAxis:{title:'Datetime'}
+                         });
+                figurePanel.insert(4,chart);
+                propertyNamePrev=propertyName;
+              }
+            }
+          });
+          
+          var selectSite = ui.Select({
+            placeholder:'Select site to preview',
+            // value:siteNames[0],
+            style:{margin: '10px 10px 1px 1px',stretch:'horizontal'},
+            items: siteNamesOrdered,
+            onChange: function() {
+              siteIndexPrev=siteIndex;
+              siteIndex=siteNamesOrdered.indexOf(selectSite.getValue());
+              if(siteIndex!==siteIndexPrev){
+               figurePanel.remove(chart);
+                chart=ui.Chart.feature.byFeature(ee.FeatureCollection(ee.List(dataToShow).get(siteIndex)).limit(1000),'system:time_start',propertyName)
+                  .setOptions({title:description+': '+propertyName+' (site: '+
+                            siteNamesOrdered[siteIndex]+')',
+                            hAxis:{title:'Datetime'}
+                         });
+                figurePanel.insert(4,chart);
+                siteIndexPrev=siteIndex;
+              }
+            }
+          });
+            
+            var format = function(table, rowId, colId, rowProperty, colProperty) {
+            var rows = table.distinct(rowId); 
+            var joined = ee.Join.saveAll('matches').apply({
+              primary: rows, 
+              secondary: table, 
+              condition: ee.Filter.equals({
+                leftField: rowId, 
+                rightField: rowId
+              })
+            });
+            return joined.map(function(row) {
+                var values = ee.List(row.get('matches'))
+                  .map(function(feature) {
+                    feature = ee.Feature(feature);
+                    return [feature.get(colId), feature.get(colProperty)];
+                  }).flatten();
+                return row.select([rowId, rowProperty]).set(ee.Dictionary(values));
+              });
+          };
+          
+          
+          var featCollFlat=ee.FeatureCollection(output).flatten();
+          // var outputTable = format(featCollFlat, 'date', 'siteName', 'system:time_start', propertyName);
+          var dateStringsForOutput=['system:time_start','date'];
+          
+          var downloadButton1=ui.Button({label:'Click here to create export task for variable displayed above from all sites',
+                                        style: {
+                                          fontWeight: 'bold',
+                                          textAlign:'center',
+                                          stretch:'horizontal'
+                                        }
+          });
+          var downloadButton2=ui.Button({label:'Click here to create export task for all variables selected from all sites',
+                                        style: {
+                                          fontWeight: 'bold',
+                                          textAlign:'center',
+                                          stretch:'horizontal'
+                                        }
+          });
+            
+          // downloadButton1.onClick(function(){
+            
+          //   propertyName=selectProperty.getValue();
+          //   outputTable=format(featCollFlat, 'date', 'siteName', 'system:time_start', propertyName);
+          //   Export.table.toDrive({
+          //       collection:ee.FeatureCollection(outputTable),
+          //       description: description+'_'+propertyName,
+          //       fileFormat:'CSV'
+          //     });
+          // });
+          downloadButton2.onClick(function(){
+            Map.add(vectorRasterInfoPanel);
+            Export.table.toDrive({
+                collection:ee.FeatureCollection(featCollFlat),
+                description: description+'_allVariables',
+                fileFormat:'CSV'
+              });
+          });
+          
+          var figureLabel3=ui.Label({
+              value: 'Note: Buttons above will create an "Export Task" within Google Earth Engine.',
+              style: {
+                margin: '1px 1px 1px 1px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                textAlign:'center',
+                stretch:'horizontal'
+                }
+            });
+          var figureLabel4=ui.Label({
+              value: 'To export data to your Google Drive/as a GEE asset, go to "Tasks" tab and click "Run" to initiate export task.',
+              style: {
+                margin: '1px 1px 1px 1px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                textAlign:'center',
+                stretch:'horizontal'
+                }
+            });
+            var figureLabel5=ui.Label({
+              value: 'Large export queries (e.g. hourly data for multiple years) may take a while to complete.',
+              style: {
+                margin: '1px 1px 1px 1px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                textAlign:'center',
+                stretch:'horizontal'
+                }
+            });
+          var closeButton=ui.Button({label:'Click to start again',style:{stretch:'horizontal'}});
+          closeButton.onClick(function(){
+            figurePanel.clear();
+            restartScript()
+          });
+          figurePanel.add(figureLabel1).add(figureLabel1a).add(figureLabel1b).add(selectSite)
+              .add(chart).add(selectProperty)//.add(downloadButton1)
+              .add(downloadButton2).add(figureLabel3)
+              .add(figureLabel4).add(figureLabel5).add(closeButton);
+          
+          if(ui.root.widgets().length()===2){
+             ui.root.remove(ui.root.widgets().get(0));//adds panel to root (*not* Map)
+          }
+          ui.root.insert(0,figurePanel);
+          loadingPanel.style().set('shown',false);  
+        }); //end of propertyName evaluate
+        // }); //end of description evaluate
+        // }); //end of properties evaluate
+        }); //end of siteNamesOrdered evaluate
+      }
+    
+    // }); //end of geomType evaluate
+    // }); //end of siteNames evaluate
+    }); //end of analysisFlag evaluate
+    
+    
+  });
+  
+  ////////////
+  //Raster GUI
+  var drawPolygonLabel=ui.Label({
+        value: '4. Draw Region of Interest polygon on map, or define coordinates of one polygon and click button to import',
+        style: {
+          margin: '10px 50px 1px 50px',
+          fontSize: '15px',
+          fontWeight: 'bold'
+          }
+      });
+  var exportRasterLabel=ui.Label({
+        value: '5. Export data for each selected variable',
+        style: {
+          margin: '10px 50px 1px 50px',
+          fontSize: '15px',
+          fontWeight: 'bold'
+          }
+      });
+  var exportRasterButton=ui.Button({label:'Create export task(s)',
+     disabled:false,
+     style:{margin: '1px 50px 1px 50px',stretch:'horizontal'}
+  });
+  
+  var exportRasterInfoPanel=ui.Panel({
+    style: {
+    position: 'top-center',
+    width:'50%'
+    }
+  });
+  var vectorRasterInfoPanel=ui.Panel({
+    style: {
+    position: 'top-center',
+    width:'50%'
+    }
+  });
+  var exportRasterInfoLabel=ui.Label({
+        value: 'To export data to Google Drive run the task(s) that can be viewed in the Tasks tab.',
+        style: {
+          margin: '10px 50px 1px 50px',
+          fontSize: '15px',
+          fontWeight: 'bold',
+          textAlign:'center'
+          }
+      });
+  var exportRasterInfoLabel1=ui.Label({
+        value: 'Once the task turns blue, files can be downloaded from your Google Drive.',
+        style: {
+          margin: '10px 50px 1px 50px',
+          fontSize: '15px',
+          textAlign:'center'
+          }
+      });
+  var exportRasterInfoLabel2=ui.Label({
+        value: 'Note that particularly large datasets may take several hours to process. Closing the browser window after a task has been started will not cancel any export tasks that are running.',
+        style: {
+          margin: '10px 50px 1px 50px',
+          fontSize: '15px',
+          textAlign:'center'
+          }
+      });
+  var exportRasterInfoLabel3=ui.Label({
+        value: 'Datasets with >5000 time slices will be automatically split into multiple files.',
+        style: {
+          margin: '10px 50px 1px 50px',
+          fontSize: '15px',
+          textAlign:'center'
+          }
+      });
+  var exportRasterInfoLabel4=ui.Label({
+        value: 'To create new data export tasks, click the Reset button (bottom right).',
+        style: {
+          margin: '10px 50px 1px 50px',
+          fontSize: '15px',
+          textAlign:'center',
+          fontWeight: 'bold'
+          }
+      });
+  exportRasterInfoPanel.add(exportRasterInfoLabel)
+                       .add(exportRasterInfoLabel1)
+                       .add(exportRasterInfoLabel2)
+                       .add(exportRasterInfoLabel3)
+                       .add(exportRasterInfoLabel4);
+  
+  vectorRasterInfoPanel.add(exportRasterInfoLabel)
+                       .add(exportRasterInfoLabel1)
+                       .add(exportRasterInfoLabel2)
+                       //.add(exportRasterInfoLabel3)
+                       .add(exportRasterInfoLabel4);
+  
+  exportRasterButton.onClick(function(){
+    exportRasterButton.setDisabled(true);
+    loadingPanel.style().set('shown',true);
+    var exportGeometry=geometry;
+    Map.addLayer(geometry)
+    var exportImColl=ee.ImageCollection(inputVars.get('imColl'))
+        .filterDate(inputVars.get('dateStart'),inputVars.get('dateEnd'))
+        .filter(ee.Filter.calendarRange(inputVars.get('monthStart'),inputVars.get('monthEnd'),'month'))
+        //.limit(10000)
+    var exportImCollSize=ee.Number(ee.ImageCollection(exportImColl).size());
+    var exportImCollList=ee.List(ee.ImageCollection(exportImColl).toList(exportImCollSize));
+    
+    inputVars.get('variablesSelected').evaluate(function(result){
+      var exportInfo=ee.List([inputVars.get('crs'),
+                              inputVars.get('transform'),
+                              geometry,
+                              inputVars.get('description')
+        ]).getInfo();
+        
+      exportImCollSize.evaluate(function(number){
+        var numFiles=Math.ceil(number/5000);  //number of files to export
+        for (var k=0;k<numFiles;k++){
+          var fileInd=k;
+          if (k===0){
+            fileInd='';
+          }
+          var exportBandNames=ee.ImageCollection(ee.List(exportImCollList).slice(k*5000,(k+1)*5000))
+                            .map(function(im){
+                              return ee.Feature(null).set('bandName',ee.Image(im).get('system:id'),
+                                                          'date',ee.Date(ee.Image(im).get('system:time_start')).format('YYYY-MM-dd HHmm'))
+                            });
+        //Export table of datestamps
+        Export.table.toDrive({
+          collection:ee.FeatureCollection(exportBandNames),
+          description:exportInfo[3]+'_bandDateInfo'+fileInd,
+          fileFormat:'CSV',
+          selectors:['system:index','bandName','date']
+        });
+        
+        //Export raster data
+        for(var j=0;j<result.length;j++){
+          var imToExport=ee.ImageCollection(ee.List(exportImCollList).slice(k*5000,(k+1)*5000))
+                          .select(result[j])//.limit()
+                          .toBands();
+                          
+          Export.image.toDrive({
+            image:ee.Image(imToExport),
+            crs:exportInfo[0],
+            crsTransform:exportInfo[1],
+            region:geometry,//exportInfo[2],
+            maxPixels:1e13,
+            // skipEmptyTiles:true,
+            // fileFormat:'GeoTIFF',
+            description:exportInfo[3]+'_'+result[j]+fileInd
+          })
+        }
+        }
+        
+      })
+      
+      loadingPanel.style().set('shown',false);
+      Map.add(exportRasterInfoPanel)
+    })
+    
+    
+  });   
+  
+  var rasterOrCsvSelect=ui.Select({
+            placeholder:'(a) SELECT EXPORT FORMAT',
+            // value:siteNames[0],
+            style:{margin: '10px 50px 1px 50px',stretch:'horizontal'},
+            items: ['Raster grid (GeoTIFF)','Point data (CSV)'],
+            onChange:function(){
+              dataSelect.setDisabled(false);
+              if(mainPanel.widgets().length()>15){
+                while(mainPanel.widgets().length()>15){
+                  mainPanel.remove(ui.data.ActiveList(mainPanel.widgets()).get(mainPanel.widgets().length()-1))
+                }
+              }
+              if(rasterOrCsvSelect.getValue()==='Point data (CSV)'){
+                mainPanel.add(dateLabel).add(startDateBox)
+                  .add(endDateBox).add(select1)
+                  .add(select2).add(exportInfoLabel).add(exportInfoCheck1)
+                  .add(exportInfoCheck2).add(gridTypeLabel).add(gridTypeCheck1)
+                  .add(gridTypeCheck2).add(CoordsLabel).add(CoordsLabel2)
+                  .add(CoordsLabel3).add(CoordsLabel1).add(coordsTextBoxLat)
+                  .add(coordsTextBoxLon).add(coordsTextBoxNames).add(pointButton)
+                  .add(polygonButton).add(createRoiGridButton).add(goButton)
+                  .add(welcomeSubtitle1i).add(welcomeSubtitle1ii).add(welcomeSubtitle1iii);
+              } else if (rasterOrCsvSelect.getValue()==='Raster grid (GeoTIFF)'){
+                mainPanel.add(dateLabel).add(startDateBox)
+                  .add(endDateBox).add(select1)
+                  .add(select2)
+                  .add(drawPolygonLabel).add(coordsTextBoxLat)
+                  .add(coordsTextBoxLon).add(polygonButton)
+                  .add(exportRasterLabel).add(exportRasterButton)
+                  .add(welcomeSubtitle1i).add(welcomeSubtitle1ii).add(welcomeSubtitle1iii);
+                coordsTextBoxLat.setDisabled(false);
+                coordsTextBoxLon.setDisabled(false);
+                polygonButton.setDisabled(false);
+                drawingTools.setDrawModes(['polygon','rectangle']);
+                drawingTools.setShown(true);
+                drawingTools.onDraw(function(){
+                  geometry=ee.Geometry(drawingTools.layers().get(0).geometries().get(0));
+                  
+                })
+              }
+            }
+  });
+  
+  mainPanel.add(dataLabel).add(rasterOrCsvSelect)//.add(dataLabel1)
+            .add(dataSelect)
+            .add(getDatasetInfo)
+            .add(variableSelectLabel)
+            .add(variableSelect);
+}
+
+var clearMapButton=ui.Button({label:'Reset',style:{stretch:'horizontal',margin: '1px 1px 1px 1px',width:'95%'}});
+var clearMapPanel=ui.Panel({
+    style: {
+    position: 'bottom-right',
+    width:'14%'
+    }
+  });
+clearMapPanel.add(clearMapButton);
+clearMapButton.onClick(function(){
+  restartScript();
+});
+
+print('Hello! Welcome to GEEClimT!');
+print('Once data have been identified for',
+      'download, the export task(s) can be',
+      'initiated by navigating to the "Tasks"',
+      'tab above and clicking "Run". Once the',
+      'export task has completed (when it',
+      'turns blue), the data can be found in',
+      'your Google Drive.');
+restartScript();
+
+
+  
+  
