@@ -3,13 +3,13 @@
 
 **© Copyright, Dr James Lea, University of Liverpool 2023. All Rights Reserved.**
 
-The Google Earth Engine Climate Tool (GEEClimT) is an easy to use point and click interface to extract climate reanalysis data for academic research, education and outreach purposes. More details about the tool and case studies of its use can be found in the associated paper (Lea et al., submitted). Users who are interested in model projections of future climates may also wish to use GEEClimT's partner tool, the Google Earth Engine Climate Explorer (GEECE). More information on GEECE can be found here.
+The Google Earth Engine Climate Tool (GEEClimT) is an easy to use point and click interface to extract climate reanalysis data for academic research, education and outreach purposes. More details about the tool and case studies of its use can be found in the associated paper (Lea et al., submitted). Users who are interested in model projections of future climates may also wish to use GEEClimT's partner tool, the Google Earth Engine CMIP6 Explorer (GEECE). More information on GEECE can be found here.
 
 ## How to use GEEClimT
 The following provides a step by step walkthrough of how to use GEEClimT, and demonstrates its functionality. Before trying to access GEEClimT users will need to sign up for a [Google Earth Engine account](https://code.earthengine.google.com/register), and registering for a [non-commerical account](https://signup.earthengine.google.com/). Note that use of GEEClimT through this route is **not** permitted for commercial purposes. Users who wish to use GEEClimT for commercial purposes should [contact the authors](mailto:j.lea@liverpool.ac.uk). 
 
 ### Getting started
-GEECLIMT and its code is run through Google Earth Engine using JavaScript API. A direct link to the interface can be found at here **INSERT LINK**.  Once the interface has been opened through the link provided above a welcome page will appear as shown below:
+GEECLIMT and its code is run through Google Earth Engine using JavaScript API. To access the tools click [here](https://liverpool.onlinesurveys.ac.uk/geeclimt-geece-user-survey), where you will be asked for brief user information before being provided with a link to the tool.  Once the interface has been opened a welcome page will appear as shown below:
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/8ececc10-2475-4934-b805-436612b17f1c)
 
