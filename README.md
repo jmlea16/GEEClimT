@@ -1,5 +1,5 @@
 # GEEClimT - Google Earth Engine Climate Tool
-**If you use this tool please cite Lea et al. (submitted) and any citations from the data extracted using the tool.**
+**If you use this tool please cite [Lea et al. (2024)](https://www.frontiersin.org/articles/10.3389/fenvs.2024.1294446/full) and any citations from the data extracted using the tool.**
 
 **© Copyright, Dr James Lea, University of Liverpool 2023. All Rights Reserved.**
 
