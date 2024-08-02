@@ -9,7 +9,7 @@ The Google Earth Engine Climate Tool (GEEClimT) is an easy to use point and clic
 The following provides a step by step walkthrough of how to use GEEClimT, and demonstrates its functionality. Before trying to access GEEClimT users will need to have access to a non-commercial [Google Earth Engine account](https://code.earthengine.google.com/register). Note that use of GEEClimT through this route is **not** permitted for commercial purposes. Users who wish to use GEEClimT for commercial purposes should [contact the authors](mailto:j.lea@liverpool.ac.uk). 
 
 ### Getting started
-GEEClimT and its code is run through Google Earth Engine using JavaScript API. To access the tools click [here](https://liverpool.onlinesurveys.ac.uk/geeclimtgeece-user-survey1), where you will be asked for brief user information before being provided with a link to the tool.  Once the interface has been opened a welcome page will appear as shown below:
+GEEClimT and its code is run through Google Earth Engine using JavaScript API. To access the tools click [here](https://app.onlinesurveys.jisc.ac.uk/s/liverpool/geeclimt-geece-user-survey1), where you will be asked for brief user information before being provided with a link to the tool.  Once the interface has been opened a welcome page will appear as shown below:
 
 ![image](https://github.com/jmlea16/GEEClimT/assets/40822976/8ececc10-2475-4934-b805-436612b17f1c)
 
